@@ -20,6 +20,7 @@ def returnWord(request):
     # body = json.dumps(request.body)
     # post = request.post
     return HttpResponse(json.dumps(request.POST))
+    # return HttpResponse("aaaa")
     # [word, command] = request.text.split(" ")
     # return HttpResponse("word:"+word+",command:"+command)
 
