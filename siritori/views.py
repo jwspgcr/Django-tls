@@ -1,6 +1,6 @@
 import random, json
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import JsonResponse
 
 # def returnWord(request):
 #     textItems = len(request.text.split(" "))
@@ -18,8 +18,9 @@ from django.http import HttpResponse
 
 def returnWord(request):
     post = request.POST
+    response = JsonResponse({"response_type":"in_channel","text":"Hello from PythonAnywhere"})
 
-    return HttpResponse(post.get("text")+"aaa"+post.get("user_id"))
+    return response
     # return HttpResponse("aaaa")
     # [word, command] = request.text.split(" ")
     # return HttpResponse("word:"+word+",command:"+command)
