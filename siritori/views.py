@@ -19,7 +19,7 @@ from django.http import HttpResponse
 def returnWord(request):
     # body = json.dumps(request.body)
     # post = request.post
-    return HttpResponse(request.body)
+    return HttpResponse(json.dumps(request.POST))
     # [word, command] = request.text.split(" ")
     # return HttpResponse("word:"+word+",command:"+command)
 
