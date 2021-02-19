@@ -17,7 +17,7 @@ from django.http import HttpResponse
 #             return HttpResponse("continue OK")
 
 def returnWord(request):
-    post = request.post
+    post = request.POST
 
     return HttpResponse(post.get("text")+"aaa"+post.get("user_id"))
     # return HttpResponse("aaaa")
