@@ -1,4 +1,4 @@
-import random
+import random, json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 
@@ -17,7 +17,9 @@ from django.http import HttpResponse
 #             return HttpResponse("continue OK")
 
 def returnWord(request):
-    return HttpResponse("aaa")
+    # body = json.dumps(request.body)
+    # post = request.post
+    return HttpResponse(request.body)
     # [word, command] = request.text.split(" ")
     # return HttpResponse("word:"+word+",command:"+command)
 
