@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Session, Word, Link
 
-# Register your models here.
+admin.site.register(Session)
+admin.site.register(Word)
+admin.site.register(Link)
