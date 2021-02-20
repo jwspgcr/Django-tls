@@ -22,25 +22,22 @@ from .models import Session, Word, Link
 def routing(request):
     if request.method == "POST":
         post = request.POST
-        if "command" in post:
-            response = HttpResponse("hasCommand")
+        if "user_id" in post:
+            command = post["command"]
+            if command == "/tls":
+                response = chain(post)
+            elif command == "/tls-init":
+                response = init(post)
+            elif command == "/tls-add":
+                response = add(post)
+            elif command == "/tls-stats":
+                response = stats(post)
+            elif command == "/tls-help":
+                response = help(post)
+            else:
+                response = HttpResponse(post["command"])
         else:
-            response = HttpResponse("hasNotCommand")
-
-        # command=post.__getitem__("command")
-        # command = post["command"]
-        # if command == "/tls":
-        #     response = chain(post)
-        # elif command == "/tls-init":
-        #     response = init(post)
-        # elif command == "/tls-add":
-        #     response = add(post)
-        # elif command == "/tls-stats":
-        #     response = stats(post)
-        # elif command == "/tls-help":
-        #     response = help(post)
-        # else:
-        #     response = HttpResponse(post["command"])
+            response = HttpResponse("hasNotUserID")
     else:
         response = HttpResponse("get")
 
