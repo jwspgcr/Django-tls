@@ -20,4 +20,7 @@ class Word(models.Model):
 class Link(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)
-    dateAdded = models.DateField()
+    whenCreated = models.DateTimeField()
+
+    def __str__(self):
+        return self.word.kana

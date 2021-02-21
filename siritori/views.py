@@ -19,8 +19,8 @@ def routing(request):
                 message = init(post)
             elif command == "/tls-add":
                 message = add(post)
-            elif command == "/tls-stats":
-                message = stats(post)
+            elif command == "/tls-history":
+                message = history(post)
             elif command == "/tls-help":
                 message = help(post)
             else:
@@ -42,7 +42,7 @@ def chain(post):
         if items == 0:
             message = "三文字のひらがなの単語を入力してください。"
         else:
-            kana = kanaWorkaraound(post["text"])
+            kana = kanaWorkaround(post["text"])
             if isThreeLetterKana(kana):
                 if isThreeLetterKanaNotEndingWithN(kana):
                     sessionGlossary = Word.objects.filter(
@@ -53,21 +53,21 @@ def chain(post):
             セッションを削除します。"""
                     else:
                         if Word.objects.filter(kana=kana):
-                            previousLastLetter = sessionGlossary.order_by(
-                                "dateAdded").last().kana[2]
+                            previousLastLetter = Link.objects.filter(session__userID=post["user_id"]).order_by("whenCreated").last().word.kana[2]
                             if kana.startswith(previousLastLetter):
-                                # 単語のヴァリデーションOK。応答の検索。
+                                # 単語のヴァリデーションOK。リンクの登録。応答の検索。
+                                Link.objects.create(session=session[0], word=Word.objects.get(kana=kana),whenCreated=timezone.now())
                                 lastLetter = kana[2]
-                                usableVocabulary = vocabularyMayContainTailingN.exclude(
-                                    kana__endswith="ん")
                                 vocabularyMayContainTailingN = Word.objects.filter(
                                     kana__startswith=lastLetter).exclude(session__userID=post["user_id"])
+                                usableVocabulary = vocabularyMayContainTailingN.exclude(
+                                    kana__endswith="ん")
                                 if usableVocabulary:
                                     retWordQuery = random.choice(
                                         list(usableVocabulary))
                                     Link.objects.create(
-                                        session=session, word=retWordQuery, dateAdded=timezone.now())
-                                    message = f'{retWordQuer.kanji}({retWordQuery.kana})'
+                                        session=session[0], word=retWordQuery, whenCreated=timezone.now())
+                                    message = f'{retWordQuery.kanji}({retWordQuery.kana})'
                                 elif vocabularyMayContainTailingN:
                                     retWordQuery = random.choice(
                                         list(vocabularyMayContainTailingN))
@@ -75,11 +75,9 @@ def chain(post):
                                 else:
                                     message = "もう使える単語が思い浮かびません。\nあなたの勝ちです。"
                             else:
-                                message = """前の単語につながる単語ではありません。
-                別の単語を入力してください。"""
+                                message = """前の単語につながる単語ではありません。\n別の単語を入力してください。"""
                         else:
-                            message = """辞書にない単語です。
-              よろしければ/tls-addで辞書に追加してください。"""
+                            message = """辞書にない単語です。\n/tls-addで辞書に追加できます。"""
                 else:
                     session.delete()
                     message = """「ん」で終わる単語です。あなたの負けです。
@@ -88,16 +86,17 @@ def chain(post):
                 message = "単語は三文字のひらがなにしてください。"
     else:
         message = "/tls-initで新しいしりとりを始めてください。"
-
+    print(message)
     return message
 
 
 def init(post):
-    session = Session.objects.filter(userID=post["user_id"])
-    session.delete()
-    Session(userID=post["user_id"]).save()
+    Session.objects.filter(userID=post["user_id"]).delete()
+    session = Session(userID=post["user_id"])
+    session.save()
     usableVocabulary = Word.objects.exclude(kana__endswith="ん")
     retWordQuery = random.choice(list(usableVocabulary))
+    Link(session=session,word=retWordQuery,whenCreated=timezone.now()).save()
     if session:
         messageFirst = "セッションをリセットしました。"
     else:
@@ -171,11 +170,23 @@ def isThreeLetterKana(word):
         return False
 
 
-def stats(post):
-    return ""
+def history(post):
+    session = Session.objects.filter(userID=post["user_id"])
+    if session:
+        links=Link.objects.filter(session__userID=post["user_id"]).order_by("whenCreated")
+        if len(links) == 0:
+            message = "まだ履歴はありません。"
+        else:
+            message="→".join(list(map((lambda x:x.word.kanji), links)))
+    else:
+        message = "まだセッションがありません。\n/tls-initで新しいしりとりを始めてください。"
+    print(message)
+    return message
+
 
 
 def help(post):
     return """三文字しりとり Ver.1.0.0"""
 
 # curl -X POST -d 'text=hello&command=//tls-init&user_id=taro' -s 127.0.0.1:8000
+# curl "127.0.0.1:8000" --data "command=/tls-init&user_id=hoge&text=aac"
