@@ -119,12 +119,16 @@ def add(post):
         kana = post["text"].split("　")[0]
         kanji = post["text"][4:]
 
+    kana=kanaWorkaround(kana)
+    print(kana)
     if isThreeLetterKana(kana):
-        if Word.objects.filter(kana=kanaWorkaround(kana)):
+        if Word.objects.filter(kana=kana):
             message = "その単語は既に登録されています。"
+            print("Already exists")
         else:
             Word(kana=kana, kanji=kanji).save()
             message = kanji + "(" + kana + ")を登録しました。"
+            print("registered")
     else:
         message = "読みは三文字のひらがなにしてください。"
     return message
@@ -153,7 +157,7 @@ def asciiToKana(ascii):
 
 def isThreeLetterKanaNotEndingWithN(word):
     threeKanaRegex = '[\u3041-\u309F]{2}[\u3041-\u3092\u3094-\u309F]'
-    if re.compile(threeKanaRegex).fullmatch(kana):
+    if re.compile(threeKanaRegex).fullmatch(word):
         return True
     else:
         return False
@@ -161,7 +165,7 @@ def isThreeLetterKanaNotEndingWithN(word):
 
 def isThreeLetterKana(word):
     threeKanaRegex = '[\u3041-\u309F]{3}'
-    if re.compile(threeKanaRegex).fullmatch(kana):
+    if re.compile(threeKanaRegex).fullmatch(word):
         return True
     else:
         return False
