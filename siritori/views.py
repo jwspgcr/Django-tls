@@ -62,11 +62,11 @@ def chain(post):
                                 usableVocabulary = vocabularyMayContainTailingN.exclude(
                                     kana__endswith="ん")
                                 if usableVocabulary:
-                                    retWordQuery = random.choice(
+                                    retWord = random.choice(
                                         list(usableVocabulary))
                                     Link.objects.create(
-                                        session=session[0], word=retWordQuery, whenCreated=timezone.now())
-                                    message = f'{retWordQuery.kanji}({retWordQuery.kana})'
+                                        session=session[0], word=retWord, whenCreated=timezone.now())
+                                    message = f'{retWord.kanji}({retWord.kana})'
                                 elif vocabularyMayContainTailingN:
                                     session.delete()
                                     retWordQuery = random.choice(
@@ -91,17 +91,19 @@ def chain(post):
 
 
 def init(post):
-    if session:
-        messageFirst = "しりとりを始めます。"
-    else:
+    oldSession = Session.objects.filter(userID=post["user_id"])
+    if oldSession:
         messageFirst = "新しいしりとりを始めます。"
-    Session.objects.filter(userID=post["user_id"]).delete()
+    else:
+        messageFirst = "しりとりを始めます。"
+    oldSession.delete()
     session = Session(userID=post["user_id"])
     session.save()
     usableVocabulary = Word.objects.exclude(kana__endswith="ん")
-    retWordQuery = random.choice(list(usableVocabulary))
-    Link(session=session,word=retWordQuery,whenCreated=timezone.now()).save()
-    message = messageFirst+f'\n{retWordQuery.kanji}({retWordQuery.kana})'
+    retWord = random.choice(list(usableVocabulary))
+    Link(session=session,word=retWord,whenCreated=timezone.now()).save()
+    message = messageFirst+f'\n{retWord.kanji}({retWord.kana})'
+    print(message)
     return message
 
 
