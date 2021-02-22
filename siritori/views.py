@@ -30,8 +30,8 @@ def routing(request):
     else:
         message = "POST only."
 
-    # response = JsonResponse({"response_type":"in_channel","text":post["text"]})
-    response = HttpResponse(message)
+    response = JsonResponse({"response_type":"in_channel","text":message})
+    # response = HttpResponse(message)
     return response
 
 
