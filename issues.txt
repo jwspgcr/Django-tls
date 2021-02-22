@@ -1,0 +1,9 @@
+- テストコードを書く
+- ジャンゴシェルをリッチに
+- Setを知る
+- WSLでブラウザ,atom,curlを使ってみる
+- git remote周り
+- 既にデプロイしたアプリのmodelを変更した場合、どうPAでの再設定を行うか
+- postgre
+- paコマンドの中身
+- transaction
