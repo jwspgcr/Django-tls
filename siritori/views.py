@@ -11,7 +11,7 @@ from .models import Session, Word, Link
 def routing(request):
     if request.method == "POST":
         post = request.POST
-        if "user_id" in post:
+        if "command" in post:
             command = post["command"]
             if command == "/tls":
                 message = chain(post)
@@ -26,9 +26,9 @@ def routing(request):
             else:
                 message = post["command"]
         else:
-            message = "hasNotUserID"
+            message = "No command included."
     else:
-        message = "get"
+        message = "POST only."
 
     # response = JsonResponse({"response_type":"in_channel","text":post["text"]})
     response = HttpResponse(message)
@@ -49,8 +49,7 @@ def chain(post):
                         session__userID=post["user_id"])
                     if sessionGlossary.filter(kana=kana):
                         session.delete()
-                        message = """既に使われた単語です。あなたの負けです。
-            セッションを削除します。"""
+                        message = """既に使われた単語です。あなたの負けです。\nセッションを削除します。"""
                     else:
                         if Word.objects.filter(kana=kana):
                             previousLastLetter = Link.objects.filter(session__userID=post["user_id"]).order_by("whenCreated").last().word.kana[2]
