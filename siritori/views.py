@@ -49,7 +49,7 @@ def chain(post):
                         session__userID=post["user_id"])
                     if sessionGlossary.filter(kana=kana):
                         session.delete()
-                        message = """既に使われた単語です。あなたの負けです。\nセッションを削除します。"""
+                        message = "既に使われた単語です。あなたの負けです。"
                     else:
                         if Word.objects.filter(kana=kana):
                             previousLastLetter = Link.objects.filter(session__userID=post["user_id"]).order_by("whenCreated").last().word.kana[2]
@@ -68,10 +68,12 @@ def chain(post):
                                         session=session[0], word=retWordQuery, whenCreated=timezone.now())
                                     message = f'{retWordQuery.kanji}({retWordQuery.kana})'
                                 elif vocabularyMayContainTailingN:
+                                    session.delete()
                                     retWordQuery = random.choice(
                                         list(vocabularyMayContainTailingN))
                                     message = f'{retWordQuery.kanji}({retWordQuery.kana})\n「ん」で終わる単語を使ってしまいました。\nあなたの勝ちです。'
                                 else:
+                                    session.delete()
                                     message = "もう使える単語が思い浮かびません。\nあなたの勝ちです。"
                             else:
                                 message = """前の単語につながる単語ではありません。\n別の単語を入力してください。"""
@@ -79,8 +81,7 @@ def chain(post):
                             message = """辞書にない単語です。\n/tls-addで辞書に追加できます。"""
                 else:
                     session.delete()
-                    message = """「ん」で終わる単語です。あなたの負けです。
-          セッションを削除します。"""
+                    message = "「ん」で終わる単語です。あなたの負けです。"
             else:
                 message = "単語は三文字のひらがなにしてください。"
     else:
@@ -90,16 +91,16 @@ def chain(post):
 
 
 def init(post):
+    if session:
+        messageFirst = "しりとりを始めます。"
+    else:
+        messageFirst = "新しいしりとりを始めます。"
     Session.objects.filter(userID=post["user_id"]).delete()
     session = Session(userID=post["user_id"])
     session.save()
     usableVocabulary = Word.objects.exclude(kana__endswith="ん")
     retWordQuery = random.choice(list(usableVocabulary))
     Link(session=session,word=retWordQuery,whenCreated=timezone.now()).save()
-    if session:
-        messageFirst = "セッションをリセットしました。"
-    else:
-        messageFirst = "セッションを作成しました。"
     message = messageFirst+f'\n{retWordQuery.kanji}({retWordQuery.kana})'
     return message
 
