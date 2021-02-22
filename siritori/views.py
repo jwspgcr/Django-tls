@@ -53,12 +53,13 @@ def chain(post):
                     else:
                         if Word.objects.filter(kana=kana):
                             previousLastLetter = Link.objects.filter(session__userID=post["user_id"]).order_by("whenCreated").last().word.kana[2]
-                            if kana.startswith(previousLastLetter):
+                            bigPreviousLastLetter = toBigKana(previousLastLetter)
+                            if kana.startswith(bigPreviousLastLetter):
                                 # 単語のヴァリデーションOK。リンクの登録。応答の検索。
                                 Link.objects.create(session=session[0], word=Word.objects.get(kana=kana),whenCreated=timezone.now())
-                                lastLetter = kana[2]
+                                bigLastLetter = toBigKana(kana[2])
                                 vocabularyMayContainTailingN = Word.objects.filter(
-                                    kana__startswith=lastLetter).exclude(session__userID=post["user_id"])
+                                    kana__startswith=bigLastLetter).exclude(session__userID=post["user_id"])
                                 usableVocabulary = vocabularyMayContainTailingN.exclude(
                                     kana__endswith="ん")
                                 if usableVocabulary:
@@ -69,9 +70,9 @@ def chain(post):
                                     message = f'{retWord.kanji}({retWord.kana})'
                                 elif vocabularyMayContainTailingN:
                                     session.delete()
-                                    retWordQuery = random.choice(
+                                    retWord = random.choice(
                                         list(vocabularyMayContainTailingN))
-                                    message = f'{retWordQuery.kanji}({retWordQuery.kana})\n「ん」で終わる単語を使ってしまいました。\nあなたの勝ちです。'
+                                    message = f'{retWord.kanji}({retWord.kana})\n「ん」で終わる単語を使ってしまいました。\nあなたの勝ちです。'
                                 else:
                                     session.delete()
                                     message = "もう使える単語が思い浮かびません。\nあなたの勝ちです。"
@@ -139,7 +140,17 @@ kanaList = ['あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く', 'け', 'こ'
             'ぶ', 'べ', 'ぼ', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ', 'ゃ', 'ゅ', 'ょ']
 asciiList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
              'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '!', '#', '(', ')', '*', '+', '-', '<', '>', '?', '@', '^']
+smallKanaList = ["ぁ","ぃ","ぅ","ぇ","ぉ","ゃ","ゅ","ょ","ゎ",]
+bigKanaList = ["あ","い","う","え","お","や","ゆ","よ","わ",]
 
+def toBigKana(word):
+    retWord = ""
+    for letter in list(word):
+        if letter in smallKanaList:
+            retWord += bigKanaList[smallKanaList.index(letter)]
+        else:
+            retWord += letter
+    return retWord
 
 def kanaWorkaround(word):
     if word[0] in asciiList:
