@@ -27,12 +27,12 @@ def routing(request):
                 message = post["command"]
         else:
             message = "No command included."
-        response['Access-Control-Allow-Origin'] = 'jwspgcr.github.io'
-        response['Access-Control-Allow-Credentials'] = 'true'
         response = JsonResponse({"response_type":"in_channel","text":message})
+        response['Access-Control-Allow-Origin'] = 'https://jwspgcr.github.io'
+        response['Access-Control-Allow-Credentials'] = 'true'
     elif request.method == "OPTIONS":
         response = HttpResponse()
-        response['Access-Control-Allow-Origin'] = 'jwspgcr.github.io'
+        response['Access-Control-Allow-Origin'] = 'https://jwspgcr.github.io'
         response['Access-Control-Allow-Credentials'] = 'true'
         response['Access-Control-Allow-Headers'] = "Content-Type, Accept, X-CSRFToken"
         response['Access-Control-Allow-Methods'] = "POST, OPTIONS"

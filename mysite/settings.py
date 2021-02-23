@@ -35,13 +35,13 @@ ALLOWED_HOSTS = ['127.0.0.1',
 # Application definition
 
 INSTALLED_APPS = [
-    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'siritori.apps.SiritoriConfig',
 ]
 
@@ -56,7 +56,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ORIGIN_WHITELIST = [
-    'jwspgcr.github.io',
+    'https://jwspgcr.github.io',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
