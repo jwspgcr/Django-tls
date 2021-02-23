@@ -26,7 +26,7 @@ SECRET_KEY = 'n6bi^p^+v@&vfz_51=&t)-!72*%t+*l-ou0k)%1)n(6g$z0)7+'
 DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1',
-                '.pythonanywhere.com'
+                '.pythonanywhere.com',
                 'localhost',
                 'jwspgcr.github.io'
 ]
