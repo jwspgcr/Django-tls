@@ -27,7 +27,8 @@ def routing(request):
                 message = post["command"]
         else:
             message = "No command included."
-        response = JsonResponse({"response_type":"in_channel","text":message})
+        response = JsonResponse(
+            {"response_type": "in_channel", "text": message})
         # response['Access-Control-Allow-Origin'] = 'https://jwspgcr.github.io'
         # response['Access-Control-Allow-Credentials'] = 'true'
     elif request.method == "OPTIONS":
@@ -39,67 +40,67 @@ def routing(request):
     else:
         response = HttpResponse("POST only.")
 
-    # response = HttpResponse(message)
     return response
 
 
 def chain(post):
+    if len(post["user_id"]) == 0:
+        return "ユーザー名が入力されていません。"
+
     session = Session.objects.filter(userID=post["user_id"])
-    if session:
-        items = len(post["text"].split("　"))
-        if items == 0:
-            message = "三文字のひらがなの単語を入力してください。"
-        else:
-            kana = kanaWorkaround(post["text"])
-            if isThreeLetterKana(kana):
-                if isThreeLetterKanaNotEndingWithN(kana):
-                    sessionGlossary = Word.objects.filter(
-                        session__userID=post["user_id"])
-                    if sessionGlossary.filter(kana=kana):
-                        session.delete()
-                        message = "既に使われた単語です。あなたの負けです。"
-                    else:
-                        if Word.objects.filter(kana=kana):
-                            previousLastLetter = Link.objects.filter(session__userID=post["user_id"]).order_by("whenCreated").last().word.kana[2]
-                            bigPreviousLastLetter = toBigKana(previousLastLetter)
-                            if kana.startswith(bigPreviousLastLetter):
-                                # 単語のヴァリデーションOK。リンクの登録。応答の検索。
-                                Link.objects.create(session=session[0], word=Word.objects.get(kana=kana),whenCreated=timezone.now())
-                                bigLastLetter = toBigKana(kana[2])
-                                vocabularyMayContainTailingN = Word.objects.filter(
-                                    kana__startswith=bigLastLetter).exclude(session__userID=post["user_id"])
-                                usableVocabulary = vocabularyMayContainTailingN.exclude(
-                                    kana__endswith="ん")
-                                if usableVocabulary:
-                                    retWord = random.choice(
-                                        list(usableVocabulary))
-                                    Link.objects.create(
-                                        session=session[0], word=retWord, whenCreated=timezone.now())
-                                    message = f'{retWord.kanji}({retWord.kana})'
-                                elif vocabularyMayContainTailingN:
-                                    session.delete()
-                                    retWord = random.choice(
-                                        list(vocabularyMayContainTailingN))
-                                    message = f'{retWord.kanji}({retWord.kana})\n「ん」で終わる単語を使ってしまいました。\nあなたの勝ちです。'
-                                else:
-                                    session.delete()
-                                    message = "もう使える単語が思い浮かびません。\nあなたの勝ちです。"
-                            else:
-                                message = """前の単語につながる単語ではありません。\n別の単語を入力してください。"""
-                        else:
-                            message = """辞書にない単語です。\n/tls-addで辞書に追加できます。"""
-                else:
-                    session.delete()
-                    message = "「ん」で終わる単語です。あなたの負けです。"
-            else:
-                message = "単語は三文字のひらがなにしてください。"
+    if len(session) == 0:
+        return "/tls-initで新しいしりとりを始めてください。"
+
+    if len(post["text"]) == 0:
+        return "三文字のひらがなの単語を入力してください。"
+
+    kana = kanaWorkaround(post["text"])
+    if not isThreeLetterKana(kana):
+        return "単語は三文字のひらがなにしてください。"
+
+    previousLastLetter = Link.objects.filter(
+        session__userID=post["user_id"]).order_by("whenCreated").last().word.kana[2]
+    bigPreviousLastLetter = toBigKana(previousLastLetter)
+    if not kana.startswith(bigPreviousLastLetter):
+        return "前の単語につながる単語ではありません。\n別の単語を入力してください。"
+
+    if len(Word.objects.filter(kana=kana)) == 0:
+        return "辞書にない単語です。\n/tls-addで辞書に追加できます。"
+
+    sessionGlossary = Word.objects.filter(session__userID=post["user_id"])
+    if sessionGlossary.filter(kana=kana):
+        session.delete()
+        return "既に使われた単語です。あなたの負けです。"
+
+    if kana.endswith("ん"):
+        session.delete()
+        return "「ん」で終わる単語です。あなたの負けです。"
+
+    # 単語のヴァリデーションOK。リンクの登録。応答の検索。
+    Link.objects.create(session=session[0], word=Word.objects.get(
+        kana=kana), whenCreated=timezone.now())
+    bigLastLetter = toBigKana(kana[2])
+    vocabularyMayContainTrailingN = Word.objects.filter(
+        kana__startswith=bigLastLetter).exclude(session__userID=post["user_id"])
+    usableVocabulary = vocabularyMayContainTrailingN.exclude(kana__endswith="ん")
+    if usableVocabulary:
+        retWord = random.choice(list(usableVocabulary))
+        Link.objects.create(
+            session=session[0], word=retWord, whenCreated=timezone.now())
+        return f'{retWord.kanji}({retWord.kana})'
+    elif vocabularyMayContainTrailingN:
+        session.delete()
+        retWord = random.choice(
+            list(vocabularyMayContainTrailingN))
+        return f'{retWord.kanji}({retWord.kana})\n「ん」で終わる単語を使ってしまいました。\nあなたの勝ちです。'
     else:
-        message = "/tls-initで新しいしりとりを始めてください。"
-    print(message)
-    return message
+        session.delete()
+        return "もう使える単語が思い浮かびません。\nあなたの勝ちです。"
 
 
 def init(post):
+    if len(post["user_id"]) == 0:
+        return "ユーザー名が入力されていません。"
     oldSession = Session.objects.filter(userID=post["user_id"])
     if oldSession:
         messageFirst = "新しいしりとりを始めます。"
@@ -161,7 +162,7 @@ def toBigKana(word):
     return retWord
 
 def kanaWorkaround(word):
-    if word[0] in asciiList:
+    if len(word) != 0 and word[0] in asciiList:
         return asciiToKana(word)
     else:
         return word
@@ -173,14 +174,6 @@ def asciiToKana(ascii):
     for letter in letters:
         retVal = retVal + kanaList[asciiList.index(letter)]
     return retVal
-
-
-def isThreeLetterKanaNotEndingWithN(word):
-    threeKanaRegex = '[\u3041-\u309F]{2}[\u3041-\u3092\u3094-\u309F]'
-    if re.compile(threeKanaRegex).fullmatch(word):
-        return True
-    else:
-        return False
 
 
 def isThreeLetterKana(word):
@@ -207,7 +200,19 @@ def history(post):
 
 
 def help(post):
-    return """三文字しりとり Ver.1.0.0"""
+    return "三文字しりとり\n"\
+            "/tls-init, 新しいしりとりをはじめる。履歴は削除される。\n"\
+            "・/tls-initせずに前回と同じ名前を入れると続きから始められる。\n"\
+            "/tls, しりとりをする。\n"\
+            "・相手の単語の最後の文字で始まる三文字のひらがなを入力する。\n"\
+            "・「ー」は大文字の母音に変換して入力する。 e.g. 「めーる」→「めえる」\n"\
+            "・これまでに使った単語を使ってはいけない。\n"\
+            "・「ん」で終わる単語を使ってはいけない。\n"\
+            "/tls-add, サーバーの辞書に新しい単語を登録する。三文字のひらがなとその表記を全角空白区切りで入力する。　e.g. 「あかね　茜」\n"\
+            "/tls-history, これまでのしりとりの履歴を表示する。\n"\
+            "/tls-help, これ\n"\
+            "\n"\
+            "辞書の出典：https://github.com/masayu-a/WLSP"\
 
 # curl -X POST -d 'text=hello&command=//tls-init&user_id=taro' -s 127.0.0.1:8000
 # curl "127.0.0.1:8000" --data "command=/tls-init&user_id=hoge&text=aac"
